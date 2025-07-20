@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <string>
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -12,7 +13,7 @@ int main() {
 
     while (more == 'y' || more == 'Y') {
         string patientName, species;
-        double W, FR, FR1, BUP, DEX = 0, PF, PF1, RIM, CR, ANT, fluid_rate_min, fluid_rate_max;
+        double W, FR, FR1, BUP, DEX = 0, PF, PF1, RIM = 0, CR, ANT, fluid_rate_min, fluid_rate_max;
 
         // Input: Patient Info
         cout << "\nEnter the patient's name: ";
@@ -22,9 +23,18 @@ int main() {
         cin >> species;
         transform(species.begin(), species.end(), species.begin(), ::tolower);
 
+        // Validate species input
+        while (species != "dog" && species != "cat") {
+            cout << "Please enter 'dog' or 'cat': ";
+            cin >> species;
+            transform(species.begin(), species.end(), species.begin(), ::tolower);
+        }
+
         cout << "Enter " << patientName << "'s weight in lbs: ";
         cin >> W;
-        while (W <= 0) {
+        while (cin.fail() || W <= 0) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             cout << "Please enter a valid weight (> 0): ";
             cin >> W;
         }
@@ -33,10 +43,11 @@ int main() {
         double weight_kg = W / 2.2;
 
         // Output: Basic Info
+        cout << fixed << setprecision(2);
         cout << "\n--- Patient Info ---\n";
         cout << "Name: " << patientName << endl;
         cout << "Species: " << species << endl;
-        cout << "Weight: " << fixed << setprecision(2) << W << " lbs (" << weight_kg << " kg)\n";
+        cout << "Weight: " << W << " lbs (" << weight_kg << " kg)\n";
 
         // Fluid rates
         fluid_rate_min = weight_kg * 3;
@@ -82,8 +93,12 @@ int main() {
         PF = (W / 2.2) * 3 / 10;
         PF1 = (W / 2.2) * 5 / 10;
 
-        // Rimadyl
-        RIM = (W / 2.2) * 4.4 / 50;
+        // Pain Med: Rimadyl (dog) or Onsior (cat)
+        if (species == "dog") {
+            RIM = (W / 2.2) * 4.4 / 50; // 4.4 mg/kg, 50 mg/mL
+        } else {
+            RIM = weight_kg * 0.05; // 1 mg/kg ÷ 20 mg/mL
+        }
 
         // Cerenia
         CR = W / 22;
@@ -120,10 +135,17 @@ int main() {
              << setw(10) << PF1
              << setw(10) << "IV" << endl;
 
-        cout << setw(25) << "Rimadyl"
-             << setw(18) << "50 mg/mL"
-             << setw(10) << RIM
-             << setw(10) << "SQ/PO" << endl;
+        if (species == "dog") {
+            cout << setw(25) << "Rimadyl"
+                 << setw(18) << "50 mg/mL"
+                 << setw(10) << RIM
+                 << setw(10) << "SQ/PO" << endl;
+        } else {
+            cout << setw(25) << "Onsior"
+                 << setw(18) << "20 mg/mL"
+                 << setw(10) << RIM
+                 << setw(10) << "SQ" << endl;
+        }
 
         cout << setw(25) << "Cerenia"
              << setw(18) << "10 mg/mL"
@@ -131,8 +153,7 @@ int main() {
              << setw(10) << "SQ/IV" << endl;
 
         // Notes
-
-        cout << "\nNote: Antisedan dose = " << fixed << setprecision(2) << ANT << " mL IM (1:1 with Dexdomitor). Propofol is given IV to effect.\n";
+        cout << "\nNote: Antisedan dose = " << ANT << " mL IM (1:1 with Dexdomitor). Propofol is given IV to effect.\n";
 
         // Repeat?
         cout << "\nWould you like to calculate for another animal? (y/n): ";
